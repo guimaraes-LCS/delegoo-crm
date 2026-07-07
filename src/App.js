@@ -932,5 +932,3 @@ export default function App(){
     </div>
   );
 }
-
-// firebase v2
