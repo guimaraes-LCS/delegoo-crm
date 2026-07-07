@@ -282,7 +282,7 @@ const [clients,setClients]=useState([]);
   // ═══════════════════════════════════════════════════════════════
   return(
     <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:"#0f1117",minHeight:"100vh",color:"#e2e8f0"}}>
-
+      
       {/* ── HEADER PRINCIPAL ── */}
       <div style={{background:"linear-gradient(135deg,#1a1d2e,#16213e)",borderBottom:"1px solid #2d3748",padding:"0 20px"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",maxWidth:1500,margin:"0 auto",height:58}}>
