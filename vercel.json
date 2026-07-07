@@ -1,0 +1,4 @@
+{
+  "buildCommand": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
+  "framework": "create-react-app"
+}
