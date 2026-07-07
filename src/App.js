@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { db } from "./firebase";
+import { ref, onValue, set, remove } from "firebase/database";
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -146,7 +148,7 @@ const EL={tipo:"entrada",cat:"Honorários Antecipado",desc:"",valor:"",data:`${A
 // ═══════════════════════════════════════════════════════════════
 export default function App(){
   // Estado CRM
-  const [clients,setClients]=useState(CLIENTES_INI);
+const [clients,setClients]=useState([]);
   const [selC,setSelC]=useState(null);
   const [showFC,setShowFC]=useState(false);
   const [formC,setFormC]=useState(EC);
@@ -156,7 +158,7 @@ export default function App(){
   const [fSt,setFSt]=useState("TODOS");
   const [fTe,setFTe]=useState("TODOS");
   // Estado Financeiro
-  const [lancs,setLancs]=useState(LANC_INI);
+  const [lancs,setLancs]=useState([]);
   const [mes,setMes]=useState(MES_AT);
   const [ano,setAno]=useState(ANO_AT);
   const [showFL,setShowFL]=useState(false);
@@ -166,6 +168,19 @@ export default function App(){
   const [abaFin,setAbaFin]=useState("resumo");
   // Navegação principal
   const [nav,setNav]=useState("crm");
+  useEffect(()=>{
+  const clientsRef = ref(db, "clients");
+  onValue(clientsRef, (snapshot) => {
+    const data = snapshot.val();
+    setClients(data ? Object.values(data) : []);
+  });
+
+  const lancsRef = ref(db, "lancs");
+  onValue(lancsRef, (snapshot) => {
+    const data = snapshot.val();
+    setLancs(data ? Object.values(data) : []);
+  });
+},[]);
 
   // ── Cálculos CRM ──
   const filtered=useMemo(()=>clients.filter(c=>{
@@ -231,16 +246,32 @@ export default function App(){
     });
   }
 
-  function saveC(){if(!formC.nome.trim())return;if(editC){setClients(p=>p.map(c=>c.id===editC?{...formC,id:editC}:c));}else{setClients(p=>[...p,{...formC,id:Date.now()}]);}setShowFC(false);}
+  function saveC(){
+  if(!formC.nome.trim())return;
+  const id = editC || Date.now().toString();
+  set(ref(db, "clients/"+id), {...formC, id});
+  setShowFC(false);
+}
   function openNewC(){setFormC({...EC});setEditC(null);setAbaFC("cliente");setShowFC(true);}
   function openEditC(c){setFormC({...c});setEditC(c.id);setAbaFC("cliente");setShowFC(true);setSelC(null);}
-  function delC(id){setClients(p=>p.filter(c=>c.id!==id));setSelC(null);}
-  function updSt(id,status){setClients(p=>p.map(c=>c.id===id?{...c,status}:c));setSelC(p=>p?{...p,status}:null);}
+  function delC(id){remove(ref(db, "clients/"+id));setSelC(null);}
+  function updSt(id,status){
+  const c = clients.find(x=>x.id===id);
+  if(c) set(ref(db, "clients/"+id), {...c, status});
+  setSelC(p=>p?{...p,status}:null);
+}
 
-  function saveL(){if(!formL.desc.trim()||!formL.valor)return;const l={...formL,valor:parseFloat(formL.valor)||0};if(editL){setLancs(p=>p.map(x=>x.id===editL?{...l,id:editL}:x));}else{setLancs(p=>[...p,{...l,id:Date.now()}]);}setShowFL(false);}
+  function saveL(){
+  if(!formL.desc.trim()||!formL.valor)return;
+  const id = editL || Date.now().toString();
+  const l={...formL,valor:parseFloat(formL.valor)||0,id};
+  set(ref(db, "lancs/"+id), l);
+  setEditL(null);
+  setShowFL(false);
+}
   function openNewL(){const dt=`${ano}-${dd(mes+1)}-${dd(hoje.getDate())}`;setFormL({...EL,mes,ano,data:dt});setEditL(null);setShowFL(true);}
   function openEditL(l){setFormL({...l});setEditL(l.id);setShowFL(true);}
-  function delL(id){setLancs(p=>p.filter(x=>x.id!==id));}
+  function delL(id){remove(ref(db, "lancs/"+id));}
   function navMes(d){let m=mes+d,a=ano;if(m>11){m=0;a++;}if(m<0){m=11;a--;}setMes(m);setAno(a);}
 
   const selR=selC?calcC(selC):null;
